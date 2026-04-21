@@ -15,7 +15,7 @@ const scenes = {
             { id: "pencil1", icon: "✏️", category: "stationery", name: "铅笔" },
             { id: "phone", icon: "📱", category: "electronics", name: "手机" },
             { id: "laptop", icon: "💻", category: "electronics", name: "笔记本" },
-            { id: "notebook", icon: "📓", category: "stationery", name: "笔记本" }
+            { id: "notebook", icon: "📓", category: "book", name: "笔记本" }
         ]
     },
     kitchen: {
