@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindful Sort - 治愈系整理游戏</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1 class="game-title">🧘 Mindful Sort</h1>
+            <div class="game-info">
+                <span class="timer">⏱️ 00:00</span>
+                <span class="scene-name">场景：书桌</span>
+            </div>
+        </header>
+
+        <div class="scene-selector">
+            <button class="scene-btn active" data-scene="desk">
+                <span class="scene-icon">📚</span>
+                <span class="scene-label">书桌</span>
+            </button>
+            <button class="scene-btn" data-scene="kitchen">
+                <span class="scene-icon">🍳</span>
+                <span class="scene-label">厨房</span>
+            </button>
+            <button class="scene-btn" data-scene="bedroom">
+                <span class="scene-icon">🛏️</span>
+                <span class="scene-label">卧室</span>
+            </button>
+            <button class="scene-btn" data-scene="office">
+                <span class="scene-icon">💼</span>
+                <span class="scene-label">办公室</span>
+            </button>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="scene-background" id="sceneBackground">
+            </div>
+            <div class="zones" id="zonesContainer">
+            </div>
+            <div class="items" id="itemsContainer">
+            </div>
+        </div>
+
+        <div class="game-controls">
+            <button class="control-btn restart-btn" id="restartBtn">🔄 重新开始</button>
+            <button class="control-btn hint-btn" id="hintBtn">💡 提示</button>
+        </div>
+    </div>
+
+    <div class="modal" id="completionModal">
+        <div class="modal-content">
+            <h2 class="modal-title">🎉 整理完成！</h2>
+            <div class="modal-content-inner">
+                <p class="completion-message">恭喜你完成了整理任务！</p>
+                <div class="completion-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">用时</span>
+                        <span class="stat-value" id="finalTime">00:00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" id="playAgainBtn">🎮 再玩一次</button>
+                <button class="modal-btn secondary" id="changeSceneBtn">🔀 换个场景</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/game.js"></script>
+</body>
+</html>
