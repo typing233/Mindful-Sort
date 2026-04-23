@@ -98,6 +98,39 @@ class SoundManager {
         }
     }
 
+    playTone(frequency, duration, type = 'sine', volume = 0.3) {
+        this.init();
+        if (!this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+        
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+    }
+
+    playPickup() {
+        this.playTone(800, 0.1, 'sine', 0.2);
+        setTimeout(() => this.playTone(1000, 0.1, 'sine', 0.15), 50);
+    }
+
+    playDrag() {
+        this.playTone(200, 0.05, 'triangle', 0.1);
+    }
+
+    playDrop() {
+        this.playTone(400, 0.15, 'sine', 0.25);
+    }
+
     playSuccess() {
         this.init();
         if (!this.audioContext) return;
@@ -139,6 +172,12 @@ class SoundManager {
         oscillator.stop(this.audioContext.currentTime + 0.2);
     }
 
+    playCombo() {
+        this.playTone(600, 0.1, 'sine', 0.2);
+        setTimeout(() => this.playTone(800, 0.1, 'sine', 0.2), 80);
+        setTimeout(() => this.playTone(1000, 0.15, 'sine', 0.25), 160);
+    }
+
     playComplete() {
         this.init();
         if (!this.audioContext) return;
@@ -162,22 +201,310 @@ class SoundManager {
             }, index * 150);
         });
     }
+
+    playLevelUp() {
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                this.playTone(freq, 0.3, 'sine', 0.3);
+            }, index * 100);
+        });
+    }
 }
+
+class ParticleSystem {
+    constructor(container) {
+        this.container = container;
+        this.particles = [];
+    }
+
+    createParticle(x, y, options = {}) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const {
+            color = '#ff6b6b',
+            size = 8,
+            lifetime = 1000,
+            velocityX = (Math.random() - 0.5) * 10,
+            velocityY = (Math.random() - 0.5) * 10 - 5,
+            gravity = 0.3,
+            shape = 'circle'
+        } = options;
+        
+        particle.style.left = `${x}px`;
+        particle.style.top = `${y}px`;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.backgroundColor = color;
+        particle.style.borderRadius = shape === 'circle' ? '50%' : '0';
+        particle.style.opacity = '1';
+        
+        this.container.appendChild(particle);
+        
+        const startTime = Date.now();
+        let posX = x;
+        let posY = y;
+        let velX = velocityX;
+        let velY = velocityY;
+        
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = elapsed / lifetime;
+            
+            if (progress >= 1) {
+                particle.remove();
+                return;
+            }
+            
+            velY += gravity;
+            posX += velX;
+            posY += velY;
+            
+            particle.style.left = `${posX}px`;
+            particle.style.top = `${posY}px`;
+            particle.style.opacity = 1 - progress;
+            particle.style.transform = `scale(${1 - progress * 0.5})`;
+            
+            requestAnimationFrame(animate);
+        };
+        
+        requestAnimationFrame(animate);
+    }
+
+    createExplosion(x, y, count = 20, colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff']) {
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count;
+            const speed = 3 + Math.random() * 7;
+            
+            this.createParticle(x, y, {
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: 4 + Math.random() * 8,
+                velocityX: Math.cos(angle) * speed,
+                velocityY: Math.sin(angle) * speed,
+                lifetime: 800 + Math.random() * 400
+            });
+        }
+    }
+
+    createSparkle(x, y, count = 10) {
+        for (let i = 0; i < count; i++) {
+            this.createParticle(x, y, {
+                color: '#ffd700',
+                size: 3 + Math.random() * 5,
+                velocityX: (Math.random() - 0.5) * 6,
+                velocityY: -Math.random() * 8 - 2,
+                gravity: 0.2,
+                lifetime: 600 + Math.random() * 400
+            });
+        }
+    }
+
+    createConfetti(x, y, count = 30) {
+        const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#ff9ff3', '#54a0ff'];
+        for (let i = 0; i < count; i++) {
+            this.createParticle(x, y, {
+                color: colors[Math.floor(Math.random() * colors.length)],
+                size: 6 + Math.random() * 8,
+                velocityX: (Math.random() - 0.5) * 15,
+                velocityY: -Math.random() * 15 - 5,
+                gravity: 0.15,
+                shape: Math.random() > 0.5 ? 'circle' : 'square',
+                lifetime: 1500 + Math.random() * 1000
+            });
+        }
+    }
+}
+
+const levels = {
+    easy: {
+        name: "简单",
+        description: "入门级，适合新手",
+        targetTime: 120,
+        maxMistakes: 5,
+        scenes: ["desk", "kitchen"]
+    },
+    medium: {
+        name: "中等",
+        description: "需要一些技巧",
+        targetTime: 90,
+        maxMistakes: 3,
+        scenes: ["desk", "kitchen", "bedroom"]
+    },
+    hard: {
+        name: "困难",
+        description: "挑战你的速度",
+        targetTime: 60,
+        maxMistakes: 2,
+        scenes: ["bedroom", "office", "wardrobe", "library"]
+    },
+    expert: {
+        name: "专家",
+        description: "只有真正的整理大师才能通过",
+        targetTime: 45,
+        maxMistakes: 1,
+        scenes: ["wardrobe", "library", "workshop"]
+    },
+    master: {
+        name: "大师",
+        description: "人生整理师的终极考验",
+        targetTime: 30,
+        maxMistakes: 0,
+        scenes: ["wardrobe", "library", "workshop", "garden"]
+    }
+};
+
+const themes = {
+    default: {
+        name: "默认",
+        description: "经典治愈系风格",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        headerGradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+    },
+    lifeOrganizer: {
+        name: "人生整理师",
+        description: "让生活井井有条",
+        background: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
+        headerGradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        icon: "🧘"
+    },
+    colorOrganizer: {
+        name: "色彩整顿师",
+        description: "用色彩点亮生活",
+        background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+        headerGradient: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+        icon: "🎨"
+    },
+    minimalist: {
+        name: "极简主义",
+        description: "少即是多",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        headerGradient: "linear-gradient(135deg, #434343 0%, #000000 100%)",
+        icon: "◽"
+    },
+    nature: {
+        name: "自然疗愈",
+        description: "回归自然的宁静",
+        background: "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",
+        headerGradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+        icon: "🌿"
+    }
+};
+
+const additionalScenes = {
+    wardrobe: {
+        name: "衣柜",
+        icon: "👔",
+        background: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
+        zones: [
+            { id: "tops", label: "👕 上衣", category: "top", color: "#ff6b6b", x: 20, y: 50, width: 180, height: 120 },
+            { id: "bottoms", label: "👖 下装", category: "bottom", color: "#4ecdc4", x: 20, y: 200, width: 180, height: 120 },
+            { id: "accessories", label: "💎 配饰", category: "accessory", color: "#45b7d1", x: 20, y: 350, width: 180, height: 120 }
+        ],
+        items: [
+            { id: "tshirt", icon: "👕", category: "top", name: "T恤" },
+            { id: "shirt2", icon: "👔", category: "top", name: "衬衫" },
+            { id: "sweater", icon: "🧥", category: "top", name: "毛衣" },
+            { id: "pants", icon: "👖", category: "bottom", name: "裤子" },
+            { id: "skirt", icon: "👗", category: "bottom", name: "裙子" },
+            { id: "shorts", icon: "🩳", category: "bottom", name: "短裤" },
+            { id: "hat2", icon: "🎩", category: "accessory", name: "帽子" },
+            { id: "scarf", icon: "🧣", category: "accessory", name: "围巾" },
+            { id: "gloves", icon: "🧤", category: "accessory", name: "手套" },
+            { id: "belt", icon: "👜", category: "accessory", name: "包包" }
+        ]
+    },
+    library: {
+        name: "书房",
+        icon: "📚",
+        background: "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
+        zones: [
+            { id: "fiction", label: "📖 小说", category: "fiction", color: "#ff6b6b", x: 20, y: 50, width: 180, height: 120 },
+            { id: "study", label: "📘 学习", category: "study", color: "#4ecdc4", x: 20, y: 200, width: 180, height: 120 },
+            { id: "reference", label: "📙 参考", category: "reference", color: "#45b7d1", x: 20, y: 350, width: 180, height: 120 }
+        ],
+        items: [
+            { id: "novel", icon: "📖", category: "fiction", name: "小说" },
+            { id: "poetry", icon: "📚", category: "fiction", name: "诗集" },
+            { id: "biography", icon: "📕", category: "fiction", name: "传记" },
+            { id: "textbook", icon: "📘", category: "study", name: "教科书" },
+            { id: "notebook2", icon: "📓", category: "study", name: "笔记本" },
+            { id: "workbook", icon: "📒", category: "study", name: "练习册" },
+            { id: "dictionary", icon: "📙", category: "reference", name: "字典" },
+            { id: "encyclopedia", icon: "📚", category: "reference", name: "百科全书" },
+            { id: "atlas", icon: "🗺️", category: "reference", name: "地图集" }
+        ]
+    },
+    workshop: {
+        name: "工作室",
+        icon: "🔧",
+        background: "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)",
+        zones: [
+            { id: "tools", label: "🔧 工具", category: "tool", color: "#ff6b6b", x: 20, y: 50, width: 180, height: 120 },
+            { id: "materials", label: "📦 材料", category: "material", color: "#4ecdc4", x: 20, y: 200, width: 180, height: 120 },
+            { id: "safety", label: "🛡️ 安全", category: "safety", color: "#45b7d1", x: 20, y: 350, width: 180, height: 120 }
+        ],
+        items: [
+            { id: "hammer", icon: "🔨", category: "tool", name: "锤子" },
+            { id: "screwdriver", icon: "🪛", category: "tool", name: "螺丝刀" },
+            { id: "wrench", icon: "🔧", category: "tool", name: "扳手" },
+            { id: "pliers", icon: "🗜️", category: "tool", name: "钳子" },
+            { id: "wood", icon: "🪵", category: "material", name: "木材" },
+            { id: "nails", icon: "📌", category: "material", name: "钉子" },
+            { id: "screws", icon: "🔩", category: "material", name: "螺丝" },
+            { id: "gloves2", icon: "🧤", category: "safety", name: "手套" },
+            { id: "goggles", icon: "🥽", category: "safety", name: "护目镜" }
+        ]
+    },
+    garden: {
+        name: "花园",
+        icon: "🌻",
+        background: "linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)",
+        zones: [
+            { id: "plants", label: "🌱 植物", category: "plant", color: "#51cf66", x: 20, y: 50, width: 180, height: 120 },
+            { id: "gardening", label: "🌿 园艺工具", category: "gardening", color: "#ff922b", x: 20, y: 200, width: 180, height: 120 },
+            { id: "decorations", label: "🏵️ 装饰", category: "decoration", color: "#ffd43b", x: 20, y: 350, width: 180, height: 120 }
+        ],
+        items: [
+            { id: "flower", icon: "🌸", category: "plant", name: "花朵" },
+            { id: "tree", icon: "🌳", category: "plant", name: "树苗" },
+            { id: "seed", icon: "🌱", category: "plant", name: "种子" },
+            { id: "trowel", icon: "🪴", category: "gardening", name: "小铲子" },
+            { id: "watering", icon: "💧", category: "gardening", name: "水壶" },
+            { id: "shovel", icon: "⛏️", category: "gardening", name: "铲子" },
+            { id: "statue", icon: "🗿", category: "decoration", name: "雕像" },
+            { id: "fountain", icon: "⛲", category: "decoration", name: "喷泉" },
+            { id: "bench", icon: "🪑", category: "decoration", name: "长椅" }
+        ]
+    }
+};
+
+Object.assign(scenes, additionalScenes);
 
 class MindfulSortGame {
     constructor() {
         this.currentScene = "desk";
+        this.currentLevel = "easy";
+        this.currentTheme = "default";
         this.items = [];
         this.zones = [];
         this.startTime = null;
         this.timerInterval = null;
         this.soundManager = new SoundManager();
+        this.particleSystem = null;
         this.placedItems = new Set();
         this.draggingItem = null;
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
+        this.mistakes = 0;
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.lastDragTime = 0;
+        this.isAnimatingBackground = false;
         
         this.initElements();
+        this.initParticleSystem();
         this.initEventListeners();
         this.loadScene(this.currentScene);
     }
@@ -191,6 +518,40 @@ class MindfulSortGame {
         this.sceneBackground = document.getElementById('sceneBackground');
         this.completionModal = document.getElementById('completionModal');
         this.finalTimeElement = document.getElementById('finalTime');
+        this.scoreElement = document.querySelector('.score');
+        this.comboElement = document.querySelector('.combo');
+        this.mistakesElement = document.querySelector('.mistakes');
+        
+        if (!this.scoreElement) {
+            this.scoreElement = document.createElement('span');
+            this.scoreElement.className = 'score';
+            this.scoreElement.textContent = '⭐ 0';
+        }
+        
+        if (!this.comboElement) {
+            this.comboElement = document.createElement('span');
+            this.comboElement.className = 'combo';
+            this.comboElement.textContent = '🔥 0';
+        }
+        
+        if (!this.mistakesElement) {
+            this.mistakesElement = document.createElement('span');
+            this.mistakesElement.className = 'mistakes';
+            this.mistakesElement.textContent = '❌ 0';
+        }
+        
+        const gameInfo = document.querySelector('.game-info');
+        if (gameInfo) {
+            gameInfo.appendChild(this.scoreElement);
+            gameInfo.appendChild(this.comboElement);
+            gameInfo.appendChild(this.mistakesElement);
+        }
+    }
+
+    initParticleSystem() {
+        if (this.itemsContainer) {
+            this.particleSystem = new ParticleSystem(this.itemsContainer);
+        }
     }
 
     initEventListeners() {
@@ -234,6 +595,14 @@ class MindfulSortGame {
         
         this.stopTimer();
         this.placedItems.clear();
+        this.mistakes = 0;
+        this.score = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        
+        this.updateScoreDisplay();
+        this.updateComboDisplay();
+        this.updateMistakesDisplay();
         
         document.querySelectorAll('.scene-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -248,9 +617,14 @@ class MindfulSortGame {
         this.itemsContainer.innerHTML = '';
         this.zonesContainer.innerHTML = '';
         
+        if (!this.particleSystem && this.itemsContainer) {
+            this.particleSystem = new ParticleSystem(this.itemsContainer);
+        }
+        
         this.zones = scene.zones.map(zone => ({
             ...zone,
-            element: this.createZoneElement(zone)
+            element: this.createZoneElement(zone),
+            items: []
         }));
         
         const gameAreaRect = this.gameArea.getBoundingClientRect();
@@ -281,11 +655,65 @@ class MindfulSortGame {
                 element,
                 originalX: x,
                 originalY: y,
-                placed: false
+                placed: false,
+                zoneId: null
             };
         });
         
         this.startTimer();
+    }
+
+    updateScoreDisplay() {
+        if (this.scoreElement) {
+            this.scoreElement.textContent = `⭐ ${this.score}`;
+        }
+    }
+
+    updateComboDisplay() {
+        if (this.comboElement) {
+            this.comboElement.textContent = `🔥 ${this.combo}`;
+            if (this.combo > 0) {
+                this.comboElement.classList.add('active');
+            } else {
+                this.comboElement.classList.remove('active');
+            }
+        }
+    }
+
+    updateMistakesDisplay() {
+        if (this.mistakesElement) {
+            this.mistakesElement.textContent = `❌ ${this.mistakes}`;
+        }
+    }
+
+    calculateStars() {
+        const level = levels[this.currentLevel] || levels.easy;
+        const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
+        
+        let stars = 0;
+        
+        if (elapsed <= level.targetTime) {
+            stars++;
+        }
+        if (elapsed <= level.targetTime * 0.75) {
+            stars++;
+        }
+        if (elapsed <= level.targetTime * 0.5) {
+            stars++;
+        }
+        
+        if (this.mistakes <= level.maxMistakes) {
+            stars = Math.min(3, stars + 1);
+        }
+        if (this.mistakes === 0) {
+            stars = 3;
+        }
+        
+        if (this.maxCombo >= 5) {
+            stars = Math.min(3, stars + 1);
+        }
+        
+        return Math.min(3, stars);
     }
 
     createZoneElement(zone) {
@@ -349,6 +777,7 @@ class MindfulSortGame {
         if (!item || item.placed) return;
         
         this.soundManager.init();
+        this.soundManager.playPickup();
         this.draggingItem = item;
         element.classList.add('dragging');
         
@@ -357,10 +786,24 @@ class MindfulSortGame {
         
         this.dragOffsetX = e.clientX - rect.left;
         this.dragOffsetY = e.clientY - rect.top;
+        
+        if (this.particleSystem) {
+            const itemRect = element.getBoundingClientRect();
+            const gameRect = this.gameArea.getBoundingClientRect();
+            const centerX = itemRect.left + itemRect.width / 2 - gameRect.left;
+            const centerY = itemRect.top + itemRect.height / 2 - gameRect.top;
+            this.particleSystem.createSparkle(centerX, centerY, 8);
+        }
     }
 
     handleMouseMove(e) {
         if (!this.draggingItem) return;
+        
+        const now = Date.now();
+        if (now - this.lastDragTime > 100) {
+            this.soundManager.playDrag();
+            this.lastDragTime = now;
+        }
         
         const areaRect = this.gameArea.getBoundingClientRect();
         let x = e.clientX - areaRect.left - this.dragOffsetX;
@@ -378,6 +821,7 @@ class MindfulSortGame {
     handleMouseUp(e) {
         if (!this.draggingItem) return;
         
+        this.soundManager.playDrop();
         this.draggingItem.element.classList.remove('dragging');
         
         const zone = this.getMatchingZone(this.draggingItem);
@@ -463,6 +907,35 @@ class MindfulSortGame {
     placeItem(item, zone) {
         item.placed = true;
         this.placedItems.add(item.id);
+        item.zoneId = zone.id;
+        
+        const zoneData = this.zones.find(z => z.id === zone.id);
+        if (zoneData) {
+            zoneData.items.push(item.id);
+        }
+        
+        this.combo++;
+        if (this.combo > this.maxCombo) {
+            this.maxCombo = this.combo;
+        }
+        
+        let baseScore = 100;
+        let comboBonus = 0;
+        
+        if (this.combo >= 3) {
+            comboBonus = this.combo * 50;
+            this.soundManager.playCombo();
+        }
+        
+        const totalScore = baseScore + comboBonus;
+        this.score += totalScore;
+        
+        if (this.combo >= 3) {
+            this.showComboPopup(item.element, this.combo);
+        }
+        
+        this.updateScoreDisplay();
+        this.updateComboDisplay();
         
         this.soundManager.playSuccess();
         item.element.classList.add('correct');
@@ -470,6 +943,16 @@ class MindfulSortGame {
         setTimeout(() => {
             item.element.classList.remove('correct');
         }, 500);
+        
+        if (this.particleSystem) {
+            const itemRect = item.element.getBoundingClientRect();
+            const gameRect = this.gameArea.getBoundingClientRect();
+            const centerX = itemRect.left + itemRect.width / 2 - gameRect.left;
+            const centerY = itemRect.top + itemRect.height / 2 - gameRect.top;
+            
+            this.particleSystem.createExplosion(centerX, centerY, 15);
+            this.particleSystem.createSparkle(centerX, centerY, 10);
+        }
         
         const zoneRect = zone.element.getBoundingClientRect();
         const areaRect = this.gameArea.getBoundingClientRect();
@@ -511,14 +994,87 @@ class MindfulSortGame {
             item.element.style.transition = '';
         }, 300);
         
+        this.arrangeZoneItems(zoneData);
+        
         this.checkWinCondition();
+    }
+
+    arrangeZoneItems(zoneData) {
+        if (!zoneData || zoneData.items.length === 0) return;
+        
+        const zoneRect = zoneData.element.getBoundingClientRect();
+        const areaRect = this.gameArea.getBoundingClientRect();
+        const itemSize = 40;
+        const spacing = 10;
+        const margin = 10;
+        const itemsPerRow = 2;
+        
+        zoneData.items.forEach((itemId, index) => {
+            const item = this.items.find(i => i.id === itemId);
+            if (!item || !item.placed) return;
+            
+            const row = Math.floor(index / itemsPerRow);
+            const col = index % itemsPerRow;
+            
+            const x = (zoneRect.left - areaRect.left) + margin + col * (itemSize + spacing);
+            const y = (zoneRect.top - areaRect.top) + 35 + row * (itemSize + spacing);
+            
+            item.element.style.transition = 'all 0.3s ease';
+            item.element.style.left = `${x}px`;
+            item.element.style.top = `${y}px`;
+            
+            setTimeout(() => {
+                item.element.style.transition = '';
+            }, 300);
+        });
+    }
+
+    showComboPopup(element, combo) {
+        const popup = document.createElement('div');
+        popup.className = 'combo-popup';
+        popup.textContent = `${combo}连击!`;
+        
+        const rect = element.getBoundingClientRect();
+        const gameRect = this.gameArea.getBoundingClientRect();
+        
+        popup.style.left = `${rect.left - gameRect.left + rect.width / 2}px`;
+        popup.style.top = `${rect.top - gameRect.top - 20}px`;
+        
+        this.itemsContainer.appendChild(popup);
+        
+        setTimeout(() => {
+            popup.remove();
+        }, 1500);
     }
 
     returnItemToOriginal(item) {
         if (item.placed) return;
         
+        this.mistakes++;
+        this.combo = 0;
+        
+        this.updateMistakesDisplay();
+        this.updateComboDisplay();
+        
         this.soundManager.playError();
         item.element.classList.add('wrong');
+        
+        if (this.particleSystem) {
+            const itemRect = item.element.getBoundingClientRect();
+            const gameRect = this.gameArea.getBoundingClientRect();
+            const centerX = itemRect.left + itemRect.width / 2 - gameRect.left;
+            const centerY = itemRect.top + itemRect.height / 2 - gameRect.top;
+            
+            for (let i = 0; i < 8; i++) {
+                this.particleSystem.createParticle(centerX, centerY, {
+                    color: '#ff4444',
+                    size: 5 + Math.random() * 5,
+                    velocityX: (Math.random() - 0.5) * 8,
+                    velocityY: (Math.random() - 0.5) * 8,
+                    lifetime: 600
+                });
+            }
+        }
         
         setTimeout(() => {
             item.element.classList.remove('wrong');
@@ -588,15 +1144,94 @@ class MindfulSortGame {
         if (this.placedItems.size === this.items.length) {
             this.stopTimer();
             this.soundManager.playComplete();
+            this.soundManager.playLevelUp();
+            
+            if (this.particleSystem) {
+                const gameRect = this.gameArea.getBoundingClientRect();
+                const centerX = gameRect.width / 2;
+                const centerY = gameRect.height / 2;
+                
+                this.particleSystem.createConfetti(centerX, centerY, 50);
+                
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        const randomX = Math.random() * gameRect.width;
+                        const randomY = Math.random() * gameRect.height;
+                        this.particleSystem.createExplosion(randomX, randomY, 15);
+                    }, i * 300);
+                }
+            }
+            
+            this.animateBackgroundClear();
             
             setTimeout(() => {
                 this.showCompletionModal();
-            }, 500);
+            }, 1500);
         }
     }
 
+    animateBackgroundClear() {
+        if (this.isAnimatingBackground) return;
+        this.isAnimatingBackground = true;
+        
+        const originalBackground = this.sceneBackground.style.background;
+        
+        let brightness = 1;
+        const animate = () => {
+            brightness += 0.02;
+            this.sceneBackground.style.filter = `brightness(${brightness})`;
+            
+            if (brightness < 1.5) {
+                requestAnimationFrame(animate);
+            } else {
+                setTimeout(() => {
+                    this.sceneBackground.style.filter = '';
+                    this.isAnimatingBackground = false;
+                }, 500);
+            }
+        };
+        
+        requestAnimationFrame(animate);
+        
+        const sunburst = document.createElement('div');
+        sunburst.className = 'sunburst';
+        this.sceneBackground.appendChild(sunburst);
+        
+        setTimeout(() => {
+            sunburst.remove();
+        }, 2000);
+    }
+
     showCompletionModal() {
-        this.finalTimeElement.textContent = this.getElapsedTime();
+        const stars = this.calculateStars();
+        const starDisplay = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+        
+        const modalStats = this.completionModal.querySelector('.completion-stats');
+        if (modalStats) {
+            modalStats.innerHTML = `
+                <div class="stat-item">
+                    <span class="stat-label">用时</span>
+                    <span class="stat-value" id="finalTime">${this.getElapsedTime()}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">得分</span>
+                    <span class="stat-value">${this.score}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">星级</span>
+                    <span class="stat-value stars-display">${starDisplay}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">最高连击</span>
+                    <span class="stat-value">${this.maxCombo}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">失误次数</span>
+                    <span class="stat-value">${this.mistakes}</span>
+                </div>
+            `;
+        }
+        
         this.completionModal.classList.add('show');
     }
 
