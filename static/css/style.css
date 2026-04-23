@@ -384,6 +384,139 @@ body {
     color: #667eea;
 }
 
+.score, .combo, .mistakes {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.combo.active {
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+    animation: pulseCombo 0.5s ease infinite;
+}
+
+@keyframes pulseCombo {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.particle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.combo-popup {
+    position: absolute;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    animation: comboFloat 1.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 1000;
+    transform: translateX(-50%);
+}
+
+@keyframes comboFloat {
+    0% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-30px) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-60px) scale(0.8);
+    }
+}
+
+.sunburst {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 400px;
+    height: 400px;
+    transform: translate(-50%, -50%);
+    background: conic-gradient(
+        from 0deg,
+        transparent,
+        rgba(255, 255, 255, 0.8) 10deg,
+        transparent 20deg,
+        rgba(255, 255, 255, 0.8) 30deg,
+        transparent 40deg,
+        rgba(255, 255, 255, 0.8) 50deg,
+        transparent 60deg,
+        rgba(255, 255, 255, 0.8) 70deg,
+        transparent 80deg,
+        rgba(255, 255, 255, 0.8) 90deg,
+        transparent 100deg,
+        rgba(255, 255, 255, 0.8) 110deg,
+        transparent 120deg,
+        rgba(255, 255, 255, 0.8) 130deg,
+        transparent 140deg,
+        rgba(255, 255, 255, 0.8) 150deg,
+        transparent 160deg,
+        rgba(255, 255, 255, 0.8) 170deg,
+        transparent 180deg,
+        rgba(255, 255, 255, 0.8) 190deg,
+        transparent 200deg,
+        rgba(255, 255, 255, 0.8) 210deg,
+        transparent 220deg,
+        rgba(255, 255, 255, 0.8) 230deg,
+        transparent 240deg,
+        rgba(255, 255, 255, 0.8) 250deg,
+        transparent 260deg,
+        rgba(255, 255, 255, 0.8) 270deg,
+        transparent 280deg,
+        rgba(255, 255, 255, 0.8) 290deg,
+        transparent 300deg,
+        rgba(255, 255, 255, 0.8) 310deg,
+        transparent 320deg,
+        rgba(255, 255, 255, 0.8) 330deg,
+        transparent 340deg,
+        rgba(255, 255, 255, 0.8) 350deg,
+        transparent 360deg
+    );
+    animation: sunburstRotate 2s linear forwards;
+    border-radius: 50%;
+    opacity: 0;
+}
+
+@keyframes sunburstRotate {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(0deg) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(180deg) scale(2);
+    }
+}
+
+.stars-display {
+    font-size: 2rem !important;
+    letter-spacing: 5px;
+}
+
+.completion-stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 768px) {
     .game-header {
         flex-direction: column;
@@ -434,5 +567,10 @@ body {
 
     .stat-value {
         font-size: 1.4rem;
+    }
+
+    .score, .combo, .mistakes {
+        font-size: 1rem;
+        padding: 6px 12px;
     }
 }

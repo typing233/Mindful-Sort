@@ -18,4 +18,4 @@ async def health_check():
     return {"status": "healthy", "message": "Mindful Sort 游戏运行中"}
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=2878)
+    uvicorn.run(app, host="0.0.0.0", port=9141)
