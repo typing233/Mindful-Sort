@@ -579,6 +579,7 @@ class MindfulSortGame {
 
         document.getElementById('changeSceneBtn').addEventListener('click', () => {
             this.hideCompletionModal();
+            this.loadRandomScene();
         });
 
         this.gameArea.addEventListener('mousemove', (e) => this.handleMouseMove(e));
@@ -661,6 +662,20 @@ class MindfulSortGame {
         });
         
         this.startTimer();
+    }
+
+    loadRandomScene() {
+        const sceneKeys = Object.keys(scenes);
+        const availableScenes = sceneKeys.filter(key => key !== this.currentScene);
+        
+        if (availableScenes.length === 0) {
+            this.loadScene(this.currentScene);
+            return;
+        }
+        
+        const randomIndex = Math.floor(Math.random() * availableScenes.length);
+        const randomScene = availableScenes[randomIndex];
+        this.loadScene(randomScene);
     }
 
     updateScoreDisplay() {
@@ -972,7 +987,7 @@ class MindfulSortGame {
         const margin = 10;
         
         const x = (zoneRect.left - areaRect.left) + margin + col * (itemSize + spacing);
-        const y = (zoneRect.top - areaRect.top) + 35 + row * (itemSize + spacing);
+        const y = (zoneRect.top - areaRect.top) + 45 + row * (itemSize + spacing);
         
         item.element.style.transition = 'all 0.3s ease';
         item.element.style.left = `${x}px`;
@@ -1017,7 +1032,7 @@ class MindfulSortGame {
             const col = index % itemsPerRow;
             
             const x = (zoneRect.left - areaRect.left) + margin + col * (itemSize + spacing);
-            const y = (zoneRect.top - areaRect.top) + 35 + row * (itemSize + spacing);
+            const y = (zoneRect.top - areaRect.top) + 45 + row * (itemSize + spacing);
             
             item.element.style.transition = 'all 0.3s ease';
             item.element.style.left = `${x}px`;
